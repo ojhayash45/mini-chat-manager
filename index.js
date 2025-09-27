@@ -55,51 +55,69 @@ app.get("/chats/new", (req,res) => {
 });
 
 // create route
-app.post("/chats", (req,res) => {
-    let {from,msg,to} = req.body;
-    let newChat = new Chat({
-        from : from,
-        msg : msg,
-        to : to,
-        created_at : new Date(),
-    });
-    newChat.save().then((res) => {
-        console.log("chat was saved")
-    }).catch((err) => {
-        console.log(err);
-    })
-    res.redirect("/chats");
+app.post("/chats", async (req,res, next) => {
+    try {
+        let {from,msg,to} = req.body;
+        let newChat = new Chat({
+            from : from,
+            msg : msg,
+            to : to,
+            created_at : new Date(),
+        });
+        await newChat.save();
+        res.redirect("/chats");
+    } catch(e) {
+        next(e);
+    }
 })
 // edit route 
-app.get("/chats/:id/edit", async (req,res) => {
-    let {id} = req.params;
-    let chat = await Chat.findById(id);
-    res.render("edit.ejs",{chat});
+app.get("/chats/:id/edit", async (req,res, next) => {
+    try {
+        let {id} = req.params;
+        let chat = await Chat.findById(id);
+        if (!chat) {
+            return next(); // Pass to 404 handler
+        }
+        res.render("edit.ejs",{chat});
+    } catch(e) {
+        next(e);
+    }
 });
 // update route
-app.put("/chats/:id", async (req,res) => {
-    let {id} = req.params;
-    let {newMsg} = req.body;
-    let updatedChat = await Chat.findByIdAndUpdate(id,{msg:newMsg},{runValidators:true,new:true});
-
-    console.log(updatedChat);
-    res.redirect("/chats");
+app.put("/chats/:id", async (req,res, next) => {
+    try {
+        let {id} = req.params;
+        let {newMsg} = req.body;
+        let updatedChat = await Chat.findByIdAndUpdate(id,{msg:newMsg},{runValidators:true,new:true});
+        res.redirect("/chats");
+    } catch(e) {
+        next(e);
+   }
 });
 
 // DELETE ROUTE
-app.delete("/chats/:id",async (req,res) => {
-    let {id} = req.params;
-    let deletedChat = await Chat.findByIdAndDelete(id);
-    console.log(deletedChat);
-    res.redirect("/chats");
-
+app.delete("/chats/:id",async (req,res, next) => {
+    try {
+        let {id} = req.params;
+        let deletedChat = await Chat.findByIdAndDelete(id);
+        res.redirect("/chats");
+    } catch(e) {
+        next(e);
+    }
 })
 // home route
 app.get("/", (req,res) => {
-    res.render("home.ejs");
+    res.redirect("/chats");
 })
 
+// Generic Error Handler
+app.use((err, req, res, next) => {
+    console.error(err.stack);
+    res.status(500).send('Something went wrong! Please try again later.');
+});
+
+const port = process.env.PORT || 8080;
 // starting the server
-app.listen(8080, () => {
-    console.log("Server is listenning on port 8080")
+app.listen(port, () => {
+    console.log(`Server is listenning on port ${port}`)
 } )
