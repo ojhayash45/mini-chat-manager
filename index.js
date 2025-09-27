@@ -87,7 +87,7 @@ app.delete("/chats/:id",async (req,res) => {
 })
 // home route
 app.get("/", (req,res) => {
-    res.send("root is working");
+    res.send("/chats");
 })
 
 // starting the server
