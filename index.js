@@ -96,7 +96,7 @@ app.delete("/chats/:id",async (req,res) => {
 })
 // home route
 app.get("/", (req,res) => {
-    res.redirect("/chats");
+    res.render("home.ejs");
 })
 
 // starting the server
