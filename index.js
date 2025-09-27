@@ -1,6 +1,9 @@
 const express = require('express');
 const app  = express();
 const mongoose = require('mongoose');
+if (process.env.NODE_ENV !== 'production') {
+    require('dotenv').config();
+}
 const path = require("path");
 const Chat = require("./models/chat.js")
 const methodOverride = require("method-override");
@@ -11,6 +14,8 @@ app.use(express.static(path.join(__dirname,"public")));
 app.use(express.urlencoded({extended:true}));
 app.use(methodOverride("_method"));
 
+const dbUrl = process.env.DB_URL || 'mongodb://127.0.0.1:27017/whatsapp';
+
 // stablishing connection with db
 main().then(() => {
     console.log("connection succesfull");
@@ -18,7 +23,7 @@ main().then(() => {
 .catch(err => console.log(err));
 
 async function main() {
-  await mongoose.connect('mongodb://127.0.0.1:27017/whatsapp');
+  await mongoose.connect(dbUrl);
 }
 
 // let chat1 = new Chat({
@@ -35,10 +40,14 @@ async function main() {
 //     console.log(err);
 // })
 // chats route
-app.get("/chats", async(req,res) => {
-    let chats = await Chat.find();
-    // console.log(chats);
-    res.render("index.ejs",{chats});
+app.get("/chats", async(req,res, next) => {
+    try {
+        let chats = await Chat.find();
+        // console.log(chats);
+        res.render("index.ejs",{chats});
+    } catch (e) {
+        next(e);
+    }
 })
 // New Route
 app.get("/chats/new", (req,res) => {
